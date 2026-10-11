@@ -44,7 +44,10 @@ button{font:inherit;color:inherit}
 .lights{position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse 70% 70% at 50% 46%,rgba(4,3,2,.86),rgba(0,0,0,.97) 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;color:#cfc6b8;transition:opacity 1.3s ease .35s;-webkit-tap-highlight-color:transparent}
 .lights .sw{width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,214,150,.35);display:grid;place-items:center;box-shadow:0 0 0 0 rgba(255,200,120,.25);animation:ping 2.2s ease-out infinite}
 .lights .sw svg{width:24px;height:24px;stroke:#ffd9a0;fill:none;stroke-width:1.6;stroke-linecap:round}
-.lights p{font-size:.8rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;opacity:.75}
+.lights p{font-size:.8rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;opacity:.75;text-align:center;padding:0 24px;max-width:100vw}
+@media (max-width:760px){.lights p{letter-spacing:.14em;font-size:.72rem}}
+.leaf.far{display:none}
+html,body{max-width:100%;overflow:hidden}.stage{overflow:hidden;max-width:100vw}
 .lights small{font-size:.7rem;opacity:.45;letter-spacing:.08em}
 @keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,200,120,.3)}100%{box-shadow:0 0 0 22px rgba(255,200,120,0)}}
 .lights.flick{animation:flick .55s steps(1) both;cursor:default}
@@ -81,7 +84,7 @@ body.lit .lampobj .bulb{fill:url(#bulbOn)}
   background:radial-gradient(ellipse 22% 26% at calc(100% - min(120px,9vw)) 14%,rgba(255,205,140,.22),transparent 70%),
              linear-gradient(225deg,rgba(255,200,130,.07),transparent 45%)}
 body.lit .beam{opacity:1}
-@media (max-width:760px){.lampobj{width:120px;right:-26px;top:54px}}
+@media (max-width:760px){.lampobj{width:120px;right:-34px;top:40px;z-index:1}}
 /* ---------- book rises from the table ---------- */
 .fit{transition:transform 1.7s cubic-bezier(.2,.85,.25,1.04),filter 1.7s ease}
 body.ontable .fit{transform:translateY(4vh) rotate(-8deg) scale(.56);filter:brightness(.8)}
@@ -728,7 +731,7 @@ body.ontable .fit{transform:translateY(4vh) rotate(-8deg) scale(.56);filter:brig
     return f;
   }
   function build(){
-    single = innerWidth < BP;
+    single = VW() < BP;
     book.innerHTML=''; leaves=[];
     book.classList.toggle('single', single); fit.classList.toggle('single', single);
     const n = single ? N : N/2;
@@ -749,15 +752,20 @@ body.ontable .fit{transform:translateY(4vh) rotate(-8deg) scale(.56);filter:brig
     setZ(); state();
     book.appendChild(popSrc.cloneNode(true)); popCh=-1; pops(500);
     requestAnimationFrame(()=>requestAnimationFrame(()=>leaves.forEach(l=>l.classList.remove('instant'))));
+    vis(cur,cur);
     resize();
   }
+  function VW(){ return Math.min(document.documentElement.clientWidth||innerWidth, innerWidth); }
+  function VH(){ return Math.min(document.documentElement.clientHeight||innerHeight, innerHeight); }
+  let farT=null;
+  function vis(lo,hi){ leaves.forEach((l,i)=>l.classList.toggle('far', i<lo-2 || i>hi+1)); }
   function setZ(){
     const n=leaves.length;
     leaves.forEach((l,i)=>{ if(!l.classList.contains('turning')) l.style.zIndex = l.classList.contains('flipped') ? i+1 : n-i; });
   }
   function resize(){
     const top=document.querySelector('.top').offsetHeight, bot=document.querySelector('.ctrl').offsetHeight;
-    const availW=innerWidth-(single?24:48), availH=innerHeight-top-bot-(single?16:28);
+    const availW=VW()-(single?24:48), availH=VH()-top-bot-(single?16:28);
     const bw = single ? PW : PW*2;
     const s=Math.min(availW/bw, availH/PH, single?1.4:1.25);
     sc.style.transform='scale('+s+')'; fit.style.width=(bw*s)+'px'; fit.style.height=(PH*s)+'px';
@@ -777,6 +785,8 @@ body.ontable .fit{transform:translateY(4vh) rotate(-8deg) scale(.56);filter:brig
     if(t===cur) return;
     const prevCur=cur;
     const step=reduce?0:110;
+    clearTimeout(farT); vis(Math.min(cur,t), Math.max(cur,t));
+    farT=setTimeout(()=>vis(cur,cur), Math.abs(t-cur)*step + (reduce?60:1100));
     if(t>cur){ for(let i=cur,k=0;i<t;i++,k++) flip(i,1,k*step); }
     else { for(let i=cur-1,k=0;i>=t;i--,k++) flip(i,-1,k*step); }
     cur=t; page = single ? cur : Math.max(0, cur*2-1);
@@ -878,7 +888,7 @@ body.ontable .fit{transform:translateY(4vh) rotate(-8deg) scale(.56);filter:brig
     if(sx===null) return; const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy; sx=null;
     if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)){ dx<0 ? go(cur+1) : go(cur-1); }
   },{passive:true});
-  let rt; addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if((innerWidth<BP)!==single) build(); else resize(); },120); });
+  let rt; addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if((VW()<BP)!==single) build(); else resize(); },120); });
 
   // deep link: #p=5
   const m=location.hash.match(/p=(\d+)/); if(m) page=Math.min(N-1,+m[1]);
