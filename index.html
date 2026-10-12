@@ -365,6 +365,10 @@ body.ontable .fit{transform:translateY(4vh) rotate(-8deg) scale(.56);filter:brig
   .dots{display:none}
   .count{min-width:110px}
 }
+.rot{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);z-index:30;display:none;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(20,18,22,.88);color:#EDE6DF;font:600 .72rem/1.2 'DM Sans',system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.35);opacity:0;transition:opacity .6s;pointer-events:none}
+.rot svg{width:16px;height:16px;flex:none}
+.rot.show{opacity:1}
+@media (max-width:760px) and (orientation:portrait){.rot{display:flex}}
 </style>
 </head>
 <body class="dark ontable">
@@ -714,9 +718,10 @@ body.ontable .fit{transform:translateY(4vh) rotate(-8deg) scale(.56);filter:brig
   <button class="arrow" id="next" aria-label="Next page">→</button>
 </footer>
 
+<div class="rot" id="rot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M21 12a9 9 0 0 1-9 9"/><path d="M21 16v-4h-4"/></svg>Turn your phone sideways for a bigger view</div>
 <script>
 (function(){
-  const PW=520, PH=720, BP=760;
+  const PW=520, PH=720, BP=0;
   const src=[...document.querySelectorAll('#src > .page')];
   const N=src.length;               // 18 pages
   const book=document.getElementById('book'), fit=document.getElementById('fit'), sc=document.getElementById('scale');
@@ -765,7 +770,7 @@ body.ontable .fit{transform:translateY(4vh) rotate(-8deg) scale(.56);filter:brig
   }
   function resize(){
     const top=document.querySelector('.top').offsetHeight, bot=document.querySelector('.ctrl').offsetHeight;
-    const availW=VW()-(single?24:48), availH=VH()-top-bot-(single?16:28);
+    const nar=VW()<760; const availW=VW()-(single?24:(nar?12:48)), availH=VH()-top-bot-(single?16:(nar?12:28));
     const bw = single ? PW : PW*2;
     const s=Math.min(availW/bw, availH/PH, single?1.4:1.25);
     sc.style.transform='scale('+s+')'; fit.style.width=(bw*s)+'px'; fit.style.height=(PH*s)+'px';
@@ -839,6 +844,9 @@ body.ontable .fit{transform:translateY(4vh) rotate(-8deg) scale(.56);filter:brig
     const p=lightsEl.querySelector('p'); if(p) p.textContent='Click to turn the light back on';
   }
   lightsEl.addEventListener('click',lightOn);
+  const rotEl=document.getElementById('rot'); let rotShown=false;
+  function rotHint(){ if(rotShown) return; rotShown=true; setTimeout(()=>{ rotEl.classList.add('show'); setTimeout(()=>rotEl.classList.remove('show'),6000); },3200); }
+  lightsEl.addEventListener('click',rotHint); addEventListener('keydown',rotHint,{once:true});
   lightsEl.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); lightOn(); } });
   lampObj.addEventListener('click',e=>{ e.stopPropagation(); lit ? lightOff() : lightOn(); });
 
